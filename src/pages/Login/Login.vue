@@ -4,15 +4,15 @@
             <div class="login_header">
                 <h2 class="login_logo">硅谷外卖</h2>
                 <div class="login_header_title">
-                    <router-link to="/login/messageLogin" :class="{on: '/login/messageLogin'===$route.path||'/login'===$route.path}">短信登录</router-link>
-                    <router-link to="/login/passwordLogin" :class="{on: '/login/passwordLogin'===$route.path}">密码登录</router-link>
+                    <router-link to="/login/messageLogin" :class="{on: loginWay}">短信登录</router-link>
+                    <router-link to="/login/passwordLogin" :class="{on: !loginWay}">密码登录</router-link>
                 </div>
             </div>
             <div class="login_content">
-                <form>
-                    <!--<MessageLogin/>
-                    <PasswordLogin/>-->
-                    <router-view></router-view>
+                <form @submit.prevent="login">
+                    <keep-alive>
+                        <router-view @getMessage="getMessage" @getPassword="getPassword" @errTip="errTip" ref="child"></router-view>
+                    </keep-alive>
                     <button class="login_submit">登录</button>
                 </form>
                 <a href="javascript:;" class="about_us">关于我们</a>
@@ -21,16 +21,111 @@
                 <i class="iconfont icon-jiantou2"></i>
             </a>
         </div>
+        <AlertTip :alert-text="alertText" v-show="alertShow" @closeTip="closeTip"/>
     </section>
 </template>
 
 <script>
-    import HeaderTop from "../../components/HeaderTop/HeaderTop";
     import MessageLogin from "./MessageLogin/MessageLogin";
     import PasswordLogin from "./PasswordLogin/PasswordLogin";
+    import AlertTip from "../../components/AlertTip/AlertTip";
+    import {reqSmsLogin, reqPwdLogin} from "../../api";
+
     export default {
         name: "Login",
-        components: {PasswordLogin, MessageLogin, HeaderTop}
+        components: {AlertTip, PasswordLogin, MessageLogin},
+        data() {
+            return {
+                //loginWay: true, //true代表短信登录，false代表密码登录
+                alertText: '', //提示文本
+                alertShow: false, //显示提示框
+                rightPhone: '',
+                phone: '',
+                code: '',
+                name: '',
+                pwd: '',
+                captcha: ''
+            }
+        },
+        computed: {
+            loginWay:{
+                get() {
+                    return '/login/messageLogin'===this.$route.path||'/login'===this.$route.path
+                },
+                set(val){}
+            },
+
+        },
+        methods: {
+            showAlert(alertText) {
+                this.alertShow = true
+                this.alertText = alertText
+            },
+
+            async login() {
+                //前台表单验证
+                let result
+                if(this.loginWay) {//短信登录
+                    const {rightPhone, phone,  code} = this
+                    if(!this.rightPhone) {
+                        //手机号不正确
+                        this.showAlert('手机号不正确')
+                    }else if(!/^\d{6}$/.test(code)) {
+                        //验证码不正确(六位数字)
+                        this.showAlert('验证码不正确(六位数字)')
+                    }
+                    //发送ajax请求短信登录
+                    result = await reqSmsLogin(phone, code)
+                } else {//密码登录
+                    const {name, pwd, captcha} = this
+                    if(!this.name) {
+                        //用户名
+                        this.showAlert('用户名!')
+                    }else if(!this.pwd) {
+                        //密码
+                        this.showAlert('密码!')
+                    }else if(!this.captcha) {
+                        //验证码
+                        this.showAlert('验证码!')
+                    }
+                    //发送ajax请求密码登录
+                    result = await reqPwdLogin({name, pwd, captcha})
+                }
+                //根据结果数据处理
+                if(result.code === 0) {
+                    const user = result.data
+                    //登录成功返回个人中心
+                    this.$router.replace('/profile')
+                }else {
+                    //显示新的图片验证码
+                    this.$refs.child.getCaptcha()
+                    //显示警告提示
+                    const msg = result.msg
+                    this.showAlert(msg)
+                }
+            },
+
+            getMessage(rightPhone, phone, code) {
+                this.rightPhone = rightPhone
+                this.phone = phone
+                this.code = code
+            },
+
+            getPassword(name, pwd, captcha) {
+                this.name = name
+                this.pwd = pwd
+                this.captcha = captcha
+            },
+
+            errTip(err) {
+                this.showAlert(err)
+            },
+
+            closeTip() {
+                this.alertShow = false
+                this.alertText = ''
+            }
+        }
     }
 </script>
 
@@ -66,9 +161,6 @@
     .login_content
         >form
                 >div
-                    display none
-                    &.on
-                        display block
                     input
                         width 100%
                         height 100%
@@ -80,67 +172,7 @@
                         font 400 14px Arial
                         &:focus
                             border 1px solid #02a774
-                    .login_message
-                        position relative
-                        margin-top 16px
-                        height 48px
-                        font-size 14px
-                        background #fff
-                        .get_verification
-                            position absolute
-                            top 50%
-                            right 10px
-                            transform translateY(-50%)
-                            border 0
-                            color #ccc
-                            font-size 14px
-                            background transparent
-                    .login_verification
-                        position relative
-                        margin-top 16px
-                        height 48px
-                        font-size 14px
-                        background #fff
-                        .switch_button
-                            font-size 12px
-                            border 1px solid #ddd
-                            border-radius 8px
-                            transition background-color .3s,border-color .3s
-                            padding 0 6px
-                            width 30px
-                            height 16px
-                            line-height 16px
-                            color #fff
-                            position absolute
-                            top 50%
-                            right 10px
-                            transform translateY(-50%)
-                            &.off
-                                background #fff
-                                .switch_text
-                                    float right
-                                    color #ddd
-                            &.on
-                                background #02a774
-                            >.switch_circle
-                                //transform translateX(27px)
-                                position absolute
-                                top -1px
-                                left -1px
-                                width 16px
-                                height 16px
-                                border 1px solid #ddd
-                                border-radius 50%
-                                background #fff
-                                box-shadow 0 2px 4px 0 rgba(0,0,0,.1)
-                                transition transform .3s
-                    .login_hint
-                        margin-top 12px
-                        color #999
-                        font-size 14px
-                        line-height 20px
-                        >a
-                            color #02a774
+
                 .login_submit
                     display block
                     width 100%
