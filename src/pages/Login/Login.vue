@@ -4,8 +4,8 @@
             <div class="login_header">
                 <h2 class="login_logo">硅谷外卖</h2>
                 <div class="login_header_title">
-                    <router-link to="/login/messageLogin" :class="{on: loginWay}">短信登录</router-link>
-                    <router-link to="/login/passwordLogin" :class="{on: !loginWay}">密码登录</router-link>
+                    <router-link to="/login/messageLogin" replace>短信登录</router-link>
+                    <router-link to="/login/passwordLogin" replace>密码登录</router-link>
                 </div>
             </div>
             <div class="login_content">
@@ -17,7 +17,7 @@
                 </form>
                 <a href="javascript:;" class="about_us">关于我们</a>
             </div>
-            <a href="javascript:" class="go_back" @click="$router.replace('/profile')">
+            <a href="javascript:" class="go_back" @click="$router.back()">
                 <i class="iconfont icon-jiantou2"></i>
             </a>
         </div>
@@ -50,7 +50,7 @@
         computed: {
             loginWay:{
                 get() {
-                    return '/login/messageLogin'===this.$route.path||'/login'===this.$route.path
+                    return '/login/messageLogin'===this.$route.path
                 },
                 set(val){}
             },
@@ -70,9 +70,11 @@
                     if(!this.rightPhone) {
                         //手机号不正确
                         this.showAlert('手机号不正确')
+                        return
                     }else if(!/^\d{6}$/.test(code)) {
                         //验证码不正确(六位数字)
                         this.showAlert('验证码不正确(六位数字)')
+                        return
                     }
                     //发送ajax请求短信登录
                     result = await reqSmsLogin(phone, code)
@@ -81,12 +83,15 @@
                     if(!this.name) {
                         //用户名
                         this.showAlert('用户名!')
+                        return
                     }else if(!this.pwd) {
                         //密码
                         this.showAlert('密码!')
+                        return
                     }else if(!this.captcha) {
                         //验证码
                         this.showAlert('验证码!')
+                        return
                     }
                     //发送ajax请求密码登录
                     result = await reqPwdLogin({name, pwd, captcha})
@@ -94,11 +99,15 @@
                 //根据结果数据处理
                 if(result.code === 0) {
                     const user = result.data
+                    //将user保存到vuex的state中
+                    this.$store.dispatch('recordUser', user)
                     //登录成功返回个人中心
                     this.$router.replace('/profile')
                 }else {
-                    //显示新的图片验证码
-                    this.$refs.child.getCaptcha()
+                    if(!this.loginWay) {//短信登录
+                        //显示新的图片验证码
+                        this.$refs.child.getCaptcha()
+                    }
                     //显示警告提示
                     const msg = result.msg
                     this.showAlert(msg)
@@ -154,7 +163,7 @@
                         padding-bottom 4px
                         &:first-child
                             margin-right 40px
-                        &.on
+                        &.router-link-active
                             color #02a774
                             font-weight 700
                             border-bottom 2px solid #02a774
@@ -201,3 +210,4 @@
             font-size 20px
             color #999
 </style>
+

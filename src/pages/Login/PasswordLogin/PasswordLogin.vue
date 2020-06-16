@@ -32,6 +32,10 @@
                 captcha: '' //验证码
             }
         },
+        mounted() {
+            //刷新页面后重新获取验证码
+            this.getCaptcha()
+        },
         computed: {
             //封装传递给父路由的数据
             getPwd() {

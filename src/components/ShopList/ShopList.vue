@@ -6,11 +6,12 @@
         </div>
         <div class="shop_container">
             <ul class="shop_list" v-if="shops.length">
-                <li class="shop_li border-1px" v-for="(shop, index) in shops" :key="index">
+                <li class="shop_li border-1px" v-for="(shop, index) in shops"
+                    :key="index" @click="$router.push('/shop')">
                     <a>
                         <div class="shop_left">
-                            <img class="shop_img" src="./images/shop/4.jpg">
-                            <!--<img class="shop_img" :src="baseImageUrl+shop.image_path">-->
+                            <img class="shop_img" :src="'https://fuss10.elemecdn.com/8/40/02872ce8aefe75c16d3190e75ad61jpeg.jpeg'">
+                            <!--<img class="shop_img" :src="baseImageUrl+shop.image_path">'https://api.dujin.org/pic/'-->
                         </div>
                         <div class="shop_right">
                             <section class="shop_detail_header">
@@ -68,8 +69,8 @@
             }
         },
         computed: {
-            ...mapState(['shops'])
-        }
+            ...mapState(['shops']),
+        },
     }
 </script>
 

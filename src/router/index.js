@@ -9,6 +9,10 @@ import Search from "../pages/Search/Search";
 import Login from "../pages/Login/Login";
 import MessageLogin from "../pages/Login/MessageLogin/MessageLogin";
 import PasswordLogin from "../pages/Login/PasswordLogin/PasswordLogin";
+import Shop from "../pages/Shop/Shop";
+import ShopGoods from "../pages/Shop/ShopGoods/ShopGoods";
+import ShopInfo from "../pages/Shop/ShopInfo/ShopInfo";
+import ShopRatings from "../pages/Shop/ShopRatings/ShopRatings";
 
 //声明使用插件
 Vue.use(VueRouter)
@@ -67,9 +71,33 @@ export default new VueRouter({
                     component: PasswordLogin
                 },
                 {
-                    path: '/',
-                    component: MessageLogin
+                    path: '',
+                    redirect: '/login/messageLogin',
+                   /* path: '/',
+                    component: MessageLogin*/
                 }
+            ]
+        },
+        {
+            path: '/shop',
+            component: Shop,
+            children: [
+                {
+                    path: '/shop/goods',
+                    component: ShopGoods
+                },
+                {
+                    path: '/shop/info',
+                    component: ShopInfo
+                },
+                {
+                    path: '/shop/ratings',
+                    component: ShopRatings
+                },
+                {
+                    path: '',
+                    redirect: '/shop/goods'
+                },
             ]
         },
     ]
